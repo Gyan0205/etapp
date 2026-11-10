@@ -20,6 +20,7 @@ export const CATEGORIES: Category[] = [
   { id: 'entertainment', label: 'Fun', icon: 'game-controller', color: '#8B5CF6' },
   { id: 'rent', label: 'Rent', icon: 'home', color: '#14B8A6' },
   { id: 'savings', label: 'Savings', icon: 'wallet', color: '#6366F1' },
+  { id: 'investments', label: 'Investments', icon: 'trending-up', color: '#0EA5E9' },
   { id: 'other', label: 'Other', icon: 'ellipsis-horizontal-circle', color: '#6B7280' },
 ];
 
