@@ -15,6 +15,7 @@ declare class UpiSmsNativeModule extends NativeModule {
   parseSms(sender: string, body: string): DetectedPayment | null;
   scanInbox(sinceMs: number): Promise<DetectedPayment[]>;
   sendTestNotification(): Promise<void>;
+  updateWidget(today: string, month: string): void;
 }
 
 /** null when the native module is not part of this build (e.g. Expo Go). */

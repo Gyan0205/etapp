@@ -1,3 +1,5 @@
+import UpiSms from '../../modules/upi-sms';
+import { formatINR, toDateKey, toMonthKey } from '../format';
 import { getDb } from './db';
 
 export interface Expense {
@@ -42,12 +44,26 @@ const map = (r: Row): Expense => ({
   txnId: r.txn_id ?? '',
 });
 
+/** Pushes today/month totals to the home-screen widget (no-op outside the installed Android app). */
+export async function syncWidget(): Promise<void> {
+  try {
+    const native = UpiSms as any;
+    if (!native?.updateWidget) return;
+    const now = new Date();
+    const [today, month] = await Promise.all([getTotalForDate(toDateKey(now)), getTotalForMonth(toMonthKey(now))]);
+    native.updateWidget(formatINR(today), formatINR(month));
+  } catch {
+    // widget is best-effort
+  }
+}
+
 export async function addExpense(e: NewExpense): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     'INSERT INTO expenses (amount_paise, category, mode, note, date, created_at, txn_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
     e.amountPaise, e.category, e.mode, e.note, e.date, Date.now(), e.txnId ?? '',
   );
+  syncWidget();
 }
 
 export async function updateExpense(id: number, e: NewExpense): Promise<void> {
@@ -56,11 +72,13 @@ export async function updateExpense(id: number, e: NewExpense): Promise<void> {
     'UPDATE expenses SET amount_paise = ?, category = ?, mode = ?, note = ?, date = ? WHERE id = ?',
     e.amountPaise, e.category, e.mode, e.note, e.date, id,
   );
+  syncWidget();
 }
 
 export async function deleteExpense(id: number): Promise<void> {
   const db = await getDb();
   await db.runAsync('DELETE FROM expenses WHERE id = ?', id);
+  syncWidget();
 }
 
 export async function getExpense(id: number): Promise<Expense | null> {

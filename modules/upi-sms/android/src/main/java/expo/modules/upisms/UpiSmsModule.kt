@@ -23,6 +23,11 @@ class UpiSmsModule : Module() {
         .apply()
     }
 
+    // Pushes today / month totals (already formatted) to the home-screen widget.
+    Function("updateWidget") { today: String, month: String ->
+      ExpenseWidget.saveAndRefresh(context, today, month)
+    }
+
     // Parses one SMS (used for self-tests).
     Function("parseSms") { sender: String, body: String ->
       UpiParser.parse(sender, body, System.currentTimeMillis())?.toMap()

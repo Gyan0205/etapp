@@ -15,6 +15,7 @@ import { AddExpenseScreen } from './src/screens/AddExpenseScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { syncWidget } from './src/services/expenseService';
 import { Payment, parsePaymentUrl, syncNativeState } from './src/services/upiDetect';
 import { useColors } from './src/theme';
 
@@ -51,8 +52,15 @@ export default function App() {
   const c = useColors();
   const base = c.isDark ? DarkTheme : DefaultTheme;
   const pendingPayment = useRef<Payment | null>(null);
+  const pendingAdd = useRef(false);
 
   const openPayment = (url: string | null | undefined) => {
+    // Home-screen widget "+" button
+    if (url && url.startsWith('expensetracker://add') && !url.startsWith('expensetracker://add-upi')) {
+      if (navRef.isReady()) navRef.navigate('AddExpense');
+      else pendingAdd.current = true;
+      return;
+    }
     const payment = parsePaymentUrl(url);
     if (!payment) return;
     if (navRef.isReady()) navRef.navigate('AddExpense', { prefill: payment });
@@ -61,6 +69,7 @@ export default function App() {
 
   useEffect(() => {
     syncNativeState().catch(() => {});
+    syncWidget();
     // Tapping the "payment detected" notification opens expensetracker://add-upi?...
     Linking.getInitialURL().then(openPayment).catch(() => {});
     const sub = Linking.addEventListener('url', (e) => openPayment(e.url));
@@ -81,6 +90,9 @@ export default function App() {
           if (pendingPayment.current) {
             navRef.navigate('AddExpense', { prefill: pendingPayment.current });
             pendingPayment.current = null;
+          } else if (pendingAdd.current) {
+            navRef.navigate('AddExpense');
+            pendingAdd.current = false;
           }
         }}
       >
